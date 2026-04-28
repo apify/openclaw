@@ -9,6 +9,22 @@
       "help": "Apify personal API token used for both web search and web fetch (fallback: APIFY_API_KEY env var).",
       "sensitive": true,
       "placeholder": "apify_..."
+    },
+    "webFetch.crawlerType": {
+      "label": "Fetch Crawler Type",
+      "help": "Crawler engine for web fetch. Use playwright:firefox for JS-heavy or bot-protected pages; cheerio for fast plain-HTML pages."
+    },
+    "webFetch.timeoutSeconds": {
+      "label": "Fetch Timeout (seconds)",
+      "help": "Maximum seconds to wait for the website-content-crawler actor to respond (1–300)."
+    },
+    "webSearch.maxResults": {
+      "label": "Search Max Results",
+      "help": "Maximum number of search results to return (1–10, capped by OpenClaw core)."
+    },
+    "webSearch.timeoutSeconds": {
+      "label": "Search Timeout (seconds)",
+      "help": "Maximum seconds to wait for the rag-web-browser actor to respond (1–300)."
     }
   },
   "contracts": {
@@ -27,21 +43,20 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "apiKey": { "type": ["string", "object"] },
-          "timeoutSeconds": { "type": "number" },
-          "maxResults": { "type": "number" }
+          "timeoutSeconds": { "type": "number", "minimum": 1, "maximum": 300, "default": 30 },
+          "maxResults": { "type": "number", "minimum": 1, "maximum": 10, "default": 5 }
         }
       },
       "webFetch": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "apiKey": { "type": ["string", "object"] },
           "crawlerType": {
             "type": "string",
-            "enum": ["cheerio", "jsdom", "playwright:firefox", "playwright:chrome"]
+            "enum": ["cheerio", "jsdom", "playwright:firefox", "playwright:chrome"],
+            "default": "cheerio"
           },
-          "timeoutSeconds": { "type": "number" }
+          "timeoutSeconds": { "type": "number", "minimum": 1, "maximum": 300, "default": 30 }
         }
       }
     }
