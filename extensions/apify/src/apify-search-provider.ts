@@ -7,8 +7,19 @@ import {
   resolveProviderWebSearchPluginConfig,
 } from "openclaw/plugin-sdk/provider-web-search";
 import { createWebSearchProviderContractFields } from "openclaw/plugin-sdk/provider-web-search-config-contract";
-
-const APIFY_SEARCH_CREDENTIAL_PATH = "plugins.entries.apify.config.apiKey";
+import {
+  APIFY_CREDENTIAL_LABEL,
+  APIFY_CREDENTIAL_PATH,
+  APIFY_ENV_VARS,
+  APIFY_PLACEHOLDER,
+  APIFY_PLUGIN_ID,
+  APIFY_SEARCH_AUTO_DETECT_ORDER,
+  APIFY_SEARCH_DOCS_URL,
+  APIFY_SEARCH_HINT,
+  APIFY_SEARCH_LABEL,
+  APIFY_SIGNUP_URL,
+  resolveApifyPluginApiKey,
+} from "./apify-shared.js";
 
 type ApifySearchRuntime = typeof import("./apify-search-runtime.js");
 
@@ -36,30 +47,29 @@ const ApifySearchSchema = {
 
 export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
   return {
-    id: "apify",
-    label: "Apify RAG Web Browser",
-    hint: "Headless-rendered search results with full page content extraction.",
+    id: APIFY_PLUGIN_ID,
+    label: APIFY_SEARCH_LABEL,
+    hint: APIFY_SEARCH_HINT,
     onboardingScopes: ["text-inference"],
     requiresCredential: true,
-    credentialLabel: "Apify API token",
-    envVars: ["APIFY_API_KEY"],
-    placeholder: "apify_...",
-    signupUrl: "https://apify.com/",
-    docsUrl: "https://apify.com/apify/rag-web-browser",
-    autoDetectOrder: 60,
-    credentialPath: APIFY_SEARCH_CREDENTIAL_PATH,
+    credentialLabel: APIFY_CREDENTIAL_LABEL,
+    envVars: APIFY_ENV_VARS,
+    placeholder: APIFY_PLACEHOLDER,
+    signupUrl: APIFY_SIGNUP_URL,
+    docsUrl: APIFY_SEARCH_DOCS_URL,
+    autoDetectOrder: APIFY_SEARCH_AUTO_DETECT_ORDER,
+    credentialPath: APIFY_CREDENTIAL_PATH,
     ...createWebSearchProviderContractFields({
-      credentialPath: APIFY_SEARCH_CREDENTIAL_PATH,
+      credentialPath: APIFY_CREDENTIAL_PATH,
       searchCredential: { type: "top-level" },
-      configuredCredential: { pluginId: "apify" },
+      configuredCredential: { pluginId: APIFY_PLUGIN_ID },
     }),
     createTool: (ctx) => {
-      const pluginWebSearchConfig = resolveProviderWebSearchPluginConfig(ctx.config, "apify");
-      const sharedApiKey = (
-        ctx.config as {
-          plugins?: { entries?: { apify?: { config?: { apiKey?: unknown } } } };
-        }
-      )?.plugins?.entries?.apify?.config?.apiKey;
+      const pluginWebSearchConfig = resolveProviderWebSearchPluginConfig(
+        ctx.config,
+        APIFY_PLUGIN_ID,
+      );
+      const sharedApiKey = resolveApifyPluginApiKey(ctx.config);
       const searchConfig: SearchConfigRecord | undefined = mergeScopedSearchConfig(
         ctx.searchConfig,
         "apify",

@@ -12,8 +12,11 @@ import {
 } from "openclaw/plugin-sdk/provider-web-search";
 import { APIFY_FETCH_PROVIDER_SHARED } from "./apify-fetch-provider-shared.js";
 import type { CrawlerType } from "./apify-fetch-runtime.js";
-
-const APIFY_SHARED_CREDENTIAL_PATH = "plugins.entries.apify.config.apiKey";
+import {
+  APIFY_CREDENTIAL_PATH,
+  APIFY_PLUGIN_ID,
+  resolveApifyPluginApiKey,
+} from "./apify-shared.js";
 
 type ApifyFetchRuntime = typeof import("./apify-fetch-runtime.js");
 
@@ -25,13 +28,8 @@ function loadApifyFetchRuntime(): Promise<ApifyFetchRuntime> {
 }
 
 function resolveApifyFetchApiKey(config: unknown): string | undefined {
-  const apifyConfig = (
-    config as {
-      plugins?: { entries?: { apify?: { config?: { apiKey?: unknown } } } };
-    }
-  )?.plugins?.entries?.apify?.config;
   return (
-    readConfiguredSecretString(apifyConfig?.apiKey, APIFY_SHARED_CREDENTIAL_PATH) ??
+    readConfiguredSecretString(resolveApifyPluginApiKey(config), APIFY_CREDENTIAL_PATH) ??
     readProviderEnvValue(["APIFY_API_KEY"])
   );
 }
@@ -71,7 +69,7 @@ const ApifyFetchSchema = {
 export function createApifyWebFetchProvider(): WebFetchProviderPlugin {
   return {
     ...APIFY_FETCH_PROVIDER_SHARED,
-    applySelectionConfig: (config) => enablePluginInConfig(config, "apify").config,
+    applySelectionConfig: (config) => enablePluginInConfig(config, APIFY_PLUGIN_ID).config,
     createTool: ({ config }) => {
       const apiKey = resolveApifyFetchApiKey(config);
       const webFetchConfig = (

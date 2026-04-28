@@ -14,6 +14,11 @@ import {
   wrapWebContent,
   writeCachedSearchPayload,
 } from "openclaw/plugin-sdk/provider-web-search";
+import {
+  APIFY_CREDENTIAL_PATH,
+  APIFY_INTEGRATION_HEADERS,
+  APIFY_PLUGIN_ID,
+} from "./apify-shared.js";
 
 const APIFY_ACTOR_ENDPOINT =
   "https://api.apify.com/v2/acts/apify~rag-web-browser/run-sync-get-dataset-items";
@@ -28,7 +33,7 @@ type ApifyResultItem = {
 
 function resolveApifyApiKey(searchConfig?: SearchConfigRecord): string | undefined {
   return (
-    readConfiguredSecretString(searchConfig?.apiKey, "plugins.entries.apify.config.apiKey") ??
+    readConfiguredSecretString(searchConfig?.apiKey, APIFY_CREDENTIAL_PATH) ??
     readProviderEnvValue(["APIFY_API_KEY"])
   );
 }
@@ -77,10 +82,7 @@ export async function executeApifySearch(
         requestTimeoutSecs: timeoutSeconds,
       },
       errorLabel: "Apify RAG Web Browser",
-      extraHeaders: {
-        "x-apify-integration-platform": "openclaw",
-        "x-apify-integration-ai-tool": "true",
-      },
+      extraHeaders: APIFY_INTEGRATION_HEADERS,
     },
     async (response) => {
       const data = (await response.json()) as ApifyResultItem[];
@@ -102,13 +104,13 @@ export async function executeApifySearch(
 
   const payload = {
     query,
-    provider: "apify",
+    provider: APIFY_PLUGIN_ID,
     count: results.length,
     tookMs: Date.now() - start,
     externalContent: {
       untrusted: true,
       source: "web_search",
-      provider: "apify",
+      provider: APIFY_PLUGIN_ID,
       wrapped: true,
     },
     results,

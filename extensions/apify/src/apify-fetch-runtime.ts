@@ -4,6 +4,7 @@ import {
   withTrustedWebToolsEndpoint,
   wrapWebContent,
 } from "openclaw/plugin-sdk/provider-web-fetch";
+import { APIFY_INTEGRATION_HEADERS, APIFY_PLUGIN_ID } from "./apify-shared.js";
 
 const APIFY_CRAWLER_ENDPOINT =
   "https://api.apify.com/v2/acts/apify~website-content-crawler/run-sync-get-dataset-items";
@@ -60,8 +61,7 @@ export async function executeApifyFetch(
           Accept: "application/json",
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "x-apify-integration-platform": "openclaw",
-          "x-apify-integration-ai-tool": "true",
+          ...APIFY_INTEGRATION_HEADERS,
         },
         body: JSON.stringify({
           startUrls: [{ url }],
@@ -103,14 +103,14 @@ export async function executeApifyFetch(
 
   return {
     url: fetchedUrl,
-    provider: "apify",
+    provider: APIFY_PLUGIN_ID,
     tookMs: Date.now() - start,
     title: title ? wrapWebContent(title, "web_fetch") : "",
     text: content ? wrapWebContent(content, "web_fetch") : "",
     externalContent: {
       untrusted: true,
       source: "web_fetch",
-      provider: "apify",
+      provider: APIFY_PLUGIN_ID,
       wrapped: true,
     },
   };

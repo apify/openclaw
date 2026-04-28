@@ -1,4 +1,13 @@
 import type { WebFetchProviderPlugin } from "openclaw/plugin-sdk/provider-web-fetch-contract";
+import {
+  APIFY_CREDENTIAL_LABEL,
+  APIFY_CREDENTIAL_PATH,
+  APIFY_ENV_VARS,
+  APIFY_PLACEHOLDER,
+  APIFY_PLUGIN_ID,
+  APIFY_SIGNUP_URL,
+  resolveApifyPluginApiKey,
+} from "./apify-shared.js";
 
 type ApifyFetchProviderSharedFields = Omit<
   WebFetchProviderPlugin,
@@ -16,17 +25,17 @@ function ensureRecord(target: Record<string, unknown>, key: string): Record<stri
 }
 
 export const APIFY_FETCH_PROVIDER_SHARED = {
-  id: "apify",
+  id: APIFY_PLUGIN_ID,
   label: "Apify Website Content Crawler",
   hint: "Fetch pages with full JS rendering and anti-bot protection using Apify.",
-  credentialLabel: "Apify API token",
-  envVars: ["APIFY_API_KEY"],
-  placeholder: "apify_...",
-  signupUrl: "https://apify.com/",
+  credentialLabel: APIFY_CREDENTIAL_LABEL,
+  envVars: APIFY_ENV_VARS,
+  placeholder: APIFY_PLACEHOLDER,
+  signupUrl: APIFY_SIGNUP_URL,
   docsUrl: "https://apify.com/apify/website-content-crawler",
   autoDetectOrder: 50,
-  credentialPath: "plugins.entries.apify.config.apiKey",
-  inactiveSecretPaths: ["plugins.entries.apify.config.apiKey"],
+  credentialPath: APIFY_CREDENTIAL_PATH,
+  inactiveSecretPaths: [APIFY_CREDENTIAL_PATH],
   getCredentialValue: (fetchConfig?: Record<string, unknown>) => {
     const apifyConfig = fetchConfig?.apify;
     return apifyConfig && typeof apifyConfig === "object" && !Array.isArray(apifyConfig)
@@ -37,8 +46,7 @@ export const APIFY_FETCH_PROVIDER_SHARED = {
     const apifyConfig = ensureRecord(fetchConfigTarget, "apify");
     apifyConfig.apiKey = value;
   },
-  getConfiguredCredentialValue: (config) =>
-    (config?.plugins?.entries?.apify?.config as { apiKey?: unknown } | undefined)?.apiKey,
+  getConfiguredCredentialValue: (config) => resolveApifyPluginApiKey(config),
   setConfiguredCredentialValue: (configTarget, value) => {
     const plugins = ensureRecord(configTarget as unknown as Record<string, unknown>, "plugins");
     const entries = ensureRecord(plugins, "entries");
