@@ -104,7 +104,7 @@ describe("apify web fetch provider", () => {
           entries: {
             apify: {
               config: {
-                webFetch: { apiKey: "apify_configured_key" },
+                apiKey: "apify_configured_key",
               },
             },
           },
@@ -139,7 +139,7 @@ describe("apify web fetch provider", () => {
           entries: {
             apify: {
               config: {
-                webFetch: { apiKey: "apify_test_key" },
+                apiKey: "apify_test_key",
               },
             },
           },
@@ -173,7 +173,7 @@ describe("apify web fetch provider", () => {
         entries: {
           apify: {
             config: {
-              webFetch: { apiKey: "apify_test_key" },
+              apiKey: "apify_test_key",
             },
           },
         },
@@ -213,7 +213,7 @@ describe("apify web fetch provider", () => {
         plugins: {
           entries: {
             apify: {
-              config: { webFetch: { apiKey: "apify_test_key" } },
+              config: { apiKey: "apify_test_key" },
             },
           },
         },

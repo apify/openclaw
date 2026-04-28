@@ -26,13 +26,17 @@ export const APIFY_FETCH_PROVIDER_SHARED = {
   docsUrl: "https://apify.com/apify/website-content-crawler",
   autoDetectOrder: 50,
   credentialPath: "plugins.entries.apify.config.apiKey",
-  inactiveSecretPaths: [
-    "plugins.entries.apify.config.apiKey",
-    "plugins.entries.apify.config.webFetch.apiKey",
-    "plugins.entries.apify.config.webSearch.apiKey",
-  ],
-  getCredentialValue: (_fetchConfig?: Record<string, unknown>) => undefined,
-  setCredentialValue: (_fetchConfigTarget: Record<string, unknown>, _value: unknown) => {},
+  inactiveSecretPaths: ["plugins.entries.apify.config.apiKey"],
+  getCredentialValue: (fetchConfig?: Record<string, unknown>) => {
+    const apifyConfig = fetchConfig?.apify;
+    return apifyConfig && typeof apifyConfig === "object" && !Array.isArray(apifyConfig)
+      ? (apifyConfig as Record<string, unknown>).apiKey
+      : undefined;
+  },
+  setCredentialValue: (fetchConfigTarget: Record<string, unknown>, value: unknown) => {
+    const apifyConfig = ensureRecord(fetchConfigTarget, "apify");
+    apifyConfig.apiKey = value;
+  },
   getConfiguredCredentialValue: (config) =>
     (config?.plugins?.entries?.apify?.config as { apiKey?: unknown } | undefined)?.apiKey,
   setConfiguredCredentialValue: (configTarget, value) => {

@@ -14,7 +14,6 @@ import { APIFY_FETCH_PROVIDER_SHARED } from "./apify-fetch-provider-shared.js";
 import type { CrawlerType } from "./apify-fetch-runtime.js";
 
 const APIFY_SHARED_CREDENTIAL_PATH = "plugins.entries.apify.config.apiKey";
-const APIFY_FETCH_CREDENTIAL_PATH = "plugins.entries.apify.config.webFetch.apiKey";
 
 type ApifyFetchRuntime = typeof import("./apify-fetch-runtime.js");
 
@@ -28,23 +27,25 @@ function loadApifyFetchRuntime(): Promise<ApifyFetchRuntime> {
 function resolveApifyFetchApiKey(config: unknown): string | undefined {
   const apifyConfig = (
     config as {
-      plugins?: {
-        entries?: { apify?: { config?: { apiKey?: unknown; webFetch?: { apiKey?: unknown } } } };
-      };
+      plugins?: { entries?: { apify?: { config?: { apiKey?: unknown } } } };
     }
   )?.plugins?.entries?.apify?.config;
   return (
-    readConfiguredSecretString(apifyConfig?.webFetch?.apiKey, APIFY_FETCH_CREDENTIAL_PATH) ??
     readConfiguredSecretString(apifyConfig?.apiKey, APIFY_SHARED_CREDENTIAL_PATH) ??
     readProviderEnvValue(["APIFY_API_KEY"])
   );
 }
 
-function resolveCrawlerType(raw: unknown): CrawlerType {
-  if (raw === "jsdom" || raw === "playwright:firefox" || raw === "playwright:chrome") {
+function resolveCrawlerType(raw: unknown, fallback: CrawlerType = "cheerio"): CrawlerType {
+  if (
+    raw === "cheerio" ||
+    raw === "jsdom" ||
+    raw === "playwright:firefox" ||
+    raw === "playwright:chrome"
+  ) {
     return raw;
   }
-  return "cheerio";
+  return fallback;
 }
 
 const ApifyFetchSchema = {
@@ -91,9 +92,10 @@ export function createApifyWebFetchProvider(): WebFetchProviderPlugin {
         execute: async (args) => {
           const url = readStringParam(args, "url", { required: true });
           const crawlerTypeArg = resolveCrawlerType(
-            readStringParam(args, "crawlerType") ?? crawlerType,
+            readStringParam(args, "crawlerType"),
+            crawlerType,
           );
-          const maxChars = readNumberParam(args, "maxChars", { integer: true }) ?? undefined;
+          const maxChars = readNumberParam(args, "maxChars", { integer: true });
           const { executeApifyFetch } = await loadApifyFetchRuntime();
           return executeApifyFetch(url, apiKey, crawlerTypeArg, timeoutSeconds, maxChars);
         },

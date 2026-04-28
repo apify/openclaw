@@ -1,7 +1,5 @@
 import {
-  DEFAULT_TIMEOUT_SECONDS,
   readResponseText,
-  resolveTimeoutSeconds,
   truncateText,
   withTrustedWebToolsEndpoint,
   wrapWebContent,
@@ -55,7 +53,7 @@ export async function executeApifyFetch(
   const items = await withTrustedWebToolsEndpoint<CrawlerResultItem[]>(
     {
       url: endpointUrl,
-      timeoutSeconds: resolveTimeoutSeconds(timeoutSeconds, DEFAULT_TIMEOUT_SECONDS),
+      timeoutSeconds,
       init: {
         method: "POST",
         headers: {
@@ -73,6 +71,7 @@ export async function executeApifyFetch(
           maxResults: 1,
           removeCookieWarnings: true,
           saveMarkdown: true,
+          requestTimeoutSecs: timeoutSeconds,
         }),
       },
     },

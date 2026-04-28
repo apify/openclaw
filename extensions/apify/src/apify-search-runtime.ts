@@ -21,7 +21,6 @@ const APIFY_ACTOR_ENDPOINT =
 const DEFAULT_APIFY_COUNT = 5;
 
 type ApifyResultItem = {
-  crawl?: { httpStatusCode?: number; requestStatus?: string };
   searchResult?: { title?: string; description?: string; url?: string };
   metadata?: { title?: string; url?: string };
   markdown?: string;
@@ -29,7 +28,7 @@ type ApifyResultItem = {
 
 function resolveApifyApiKey(searchConfig?: SearchConfigRecord): string | undefined {
   return (
-    readConfiguredSecretString(searchConfig?.apiKey, "tools.web.search.apiKey") ??
+    readConfiguredSecretString(searchConfig?.apiKey, "plugins.entries.apify.config.apiKey") ??
     readProviderEnvValue(["APIFY_API_KEY"])
   );
 }
@@ -38,7 +37,7 @@ function missingApifyKeyPayload() {
   return {
     error: "missing_apify_api_key",
     message:
-      "web_search (apify) needs an Apify API token. Set APIFY_API_KEY in the environment, or configure plugins.entries.apify.config.webSearch.apiKey.",
+      "web_search (apify) needs an Apify API token. Set APIFY_API_KEY in the environment, or configure plugins.entries.apify.config.apiKey.",
     docs: "https://apify.com/apify/rag-web-browser",
   };
 }
