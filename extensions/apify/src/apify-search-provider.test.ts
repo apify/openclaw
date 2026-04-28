@@ -78,8 +78,13 @@ describe("apify web search provider", () => {
       ok: true,
       json: async () => [
         {
-          url: "https://example.com",
-          metadata: { title: "Example" },
+          crawl: { httpStatusCode: 200, requestStatus: "handled" },
+          searchResult: {
+            title: "Example",
+            description: "Example description",
+            url: "https://example.com",
+          },
+          metadata: { title: "", url: "https://example.com" },
           markdown: "Some content",
         },
       ],

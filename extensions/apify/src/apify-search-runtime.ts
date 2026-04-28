@@ -21,8 +21,9 @@ const APIFY_ACTOR_ENDPOINT =
 const DEFAULT_APIFY_COUNT = 5;
 
 type ApifyResultItem = {
-  url?: string;
-  metadata?: { title?: string };
+  crawl?: { httpStatusCode?: number; requestStatus?: string };
+  searchResult?: { title?: string; description?: string; url?: string };
+  metadata?: { title?: string; url?: string };
   markdown?: string;
 };
 
@@ -89,9 +90,9 @@ export async function executeApifySearch(
   );
 
   const results = items.map((item) => {
-    const url = item.url ?? "";
-    const title = item.metadata?.title ?? "";
-    const description = item.markdown?.slice(0, 500) ?? "";
+    const url = item.searchResult?.url ?? item.metadata?.url ?? "";
+    const title = item.searchResult?.title ?? item.metadata?.title ?? "";
+    const description = item.searchResult?.description ?? item.markdown?.slice(0, 500) ?? "";
     return {
       title: title ? wrapWebContent(title, "web_search") : "",
       url,
