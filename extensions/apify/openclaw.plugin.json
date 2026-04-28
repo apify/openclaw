@@ -9,9 +9,16 @@
       "help": "Apify personal API token for web search (fallback: APIFY_API_KEY env var).",
       "sensitive": true,
       "placeholder": "apify_..."
+    },
+    "webFetch.apiKey": {
+      "label": "Apify API Token",
+      "help": "Apify personal API token for web fetch (fallback: APIFY_API_KEY env var).",
+      "sensitive": true,
+      "placeholder": "apify_..."
     }
   },
   "contracts": {
+    "webFetchProviders": ["apify"],
     "webSearchProviders": ["apify"]
   },
   "configContracts": {
@@ -28,6 +35,18 @@
           "apiKey": { "type": ["string", "object"] },
           "timeoutSeconds": { "type": "number" },
           "maxResults": { "type": "number" }
+        }
+      },
+      "webFetch": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "apiKey": { "type": ["string", "object"] },
+          "crawlerType": {
+            "type": "string",
+            "enum": ["cheerio", "jsdom", "playwright:firefox", "playwright:chrome"]
+          },
+          "timeoutSeconds": { "type": "number" }
         }
       }
     }

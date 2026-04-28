@@ -41,6 +41,7 @@ export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
     hint: "Headless-rendered search results with full page content extraction.",
     onboardingScopes: ["text-inference"],
     requiresCredential: true,
+    credentialLabel: "Apify API token",
     envVars: ["APIFY_API_KEY"],
     placeholder: "apify_...",
     signupUrl: "https://apify.com/",
