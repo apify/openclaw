@@ -26,7 +26,7 @@ type ApifyResultItem = {
   markdown?: string;
 };
 
-export function resolveApifyApiKey(searchConfig?: SearchConfigRecord): string | undefined {
+function resolveApifyApiKey(searchConfig?: SearchConfigRecord): string | undefined {
   return (
     readConfiguredSecretString(searchConfig?.apiKey, "tools.web.search.apiKey") ??
     readProviderEnvValue(["APIFY_API_KEY"])
@@ -59,7 +59,9 @@ export async function executeApifySearch(
 
   const cacheKey = buildSearchCacheKey(["apify-rag-search", query, count, timeoutSeconds]);
   const cached = readCachedSearchPayload(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    return cached;
+  }
 
   const start = Date.now();
 

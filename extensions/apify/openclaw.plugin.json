@@ -8,7 +8,7 @@
       "label": "Apify API Token",
       "help": "Apify personal API token for web search (fallback: APIFY_API_KEY env var).",
       "sensitive": true,
-      "placeholder": "apx_..."
+      "placeholder": "apify_..."
     }
   },
   "contracts": {

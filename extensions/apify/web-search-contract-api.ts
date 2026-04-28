@@ -13,7 +13,7 @@ export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
     onboardingScopes: ["text-inference"],
     requiresCredential: true,
     envVars: ["APIFY_API_KEY"],
-    placeholder: "apx_...",
+    placeholder: "apify_...",
     signupUrl: "https://apify.com/",
     docsUrl: "https://apify.com/apify/rag-web-browser",
     autoDetectOrder: 60,

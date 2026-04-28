@@ -11,8 +11,13 @@ import { createWebSearchProviderContractFields } from "openclaw/plugin-sdk/provi
 const APIFY_SEARCH_CREDENTIAL_PATH = "plugins.entries.apify.config.webSearch.apiKey";
 
 type ApifySearchRuntime = typeof import("./apify-search-runtime.js");
-let runtimePromise: Promise<ApifySearchRuntime> | undefined;
-const loadRuntime = () => (runtimePromise ??= import("./apify-search-runtime.js"));
+
+let apifySearchRuntimePromise: Promise<ApifySearchRuntime> | undefined;
+
+function loadApifySearchRuntime(): Promise<ApifySearchRuntime> {
+  apifySearchRuntimePromise ??= import("./apify-search-runtime.js");
+  return apifySearchRuntimePromise;
+}
 
 const ApifySearchSchema = {
   type: "object",
@@ -25,6 +30,8 @@ const ApifySearchSchema = {
       maximum: 10,
     },
   },
+  required: ["query"],
+  additionalProperties: false,
 } satisfies Record<string, unknown>;
 
 export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
@@ -35,7 +42,7 @@ export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
     onboardingScopes: ["text-inference"],
     requiresCredential: true,
     envVars: ["APIFY_API_KEY"],
-    placeholder: "apx_...",
+    placeholder: "apify_...",
     signupUrl: "https://apify.com/",
     docsUrl: "https://apify.com/apify/rag-web-browser",
     autoDetectOrder: 60,
@@ -57,7 +64,7 @@ export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
           "Search the web using Apify RAG Web Browser. Returns headless-rendered pages with full markdown content — better for JS-heavy sites than pure link-list search.",
         parameters: ApifySearchSchema,
         execute: async (args) => {
-          const { executeApifySearch } = await loadRuntime();
+          const { executeApifySearch } = await loadApifySearchRuntime();
           return executeApifySearch(args, searchConfig);
         },
       };

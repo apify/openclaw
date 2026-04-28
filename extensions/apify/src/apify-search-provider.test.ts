@@ -53,7 +53,9 @@ describe("apify web search provider", () => {
     vi.stubEnv("APIFY_API_KEY", "");
     const provider = createApifyWebSearchProvider();
     const tool = provider.createTool({ config: {}, searchConfig: {} });
-    if (!tool) throw new Error("Expected tool definition");
+    if (!tool) {
+      throw new Error("Expected tool definition");
+    }
 
     const result = await tool.execute({ query: "test" });
 
@@ -61,13 +63,13 @@ describe("apify web search provider", () => {
   });
 
   it("picks up APIFY_API_KEY from the environment", () => {
-    vi.stubEnv("APIFY_API_KEY", "apx_env_key");
-    expect(__testing.resolveApifyApiKey({})).toBe("apx_env_key");
+    vi.stubEnv("APIFY_API_KEY", "apify_env_key");
+    expect(__testing.resolveApifyApiKey({})).toBe("apify_env_key");
   });
 
   it("prefers configured plugin apiKey over the environment variable", () => {
-    vi.stubEnv("APIFY_API_KEY", "apx_env_key");
-    expect(__testing.resolveApifyApiKey({ apiKey: "apx_configured" })).toBe("apx_configured");
+    vi.stubEnv("APIFY_API_KEY", "apify_env_key");
+    expect(__testing.resolveApifyApiKey({ apiKey: "apify_configured" })).toBe("apify_configured");
   });
 
   it("calls the Apify actor endpoint with the query and merged searchConfig", async () => {
@@ -87,9 +89,11 @@ describe("apify web search provider", () => {
     const provider = createApifyWebSearchProvider();
     const tool = provider.createTool({
       config: {},
-      searchConfig: { apiKey: "apx_test_key" },
+      searchConfig: { apiKey: "apify_test_key" },
     });
-    if (!tool) throw new Error("Expected tool definition");
+    if (!tool) {
+      throw new Error("Expected tool definition");
+    }
 
     const result = (await tool.execute({ query: "openclaw" })) as Record<string, unknown>;
 
@@ -101,7 +105,7 @@ describe("apify web search provider", () => {
     expect(requestUrl).toContain("apify~rag-web-browser");
 
     const init = mockFetch.mock.calls[0]?.[1] as RequestInit;
-    const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    const body = JSON.parse(init?.body as string) as Record<string, unknown>;
     expect(body.query).toBe("openclaw");
   });
 });

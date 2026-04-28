@@ -4,9 +4,6 @@
   "private": true,
   "description": "OpenClaw Apify plugin",
   "type": "module",
-  "dependencies": {
-    "typebox": "1.1.33"
-  },
   "devDependencies": {
     "@openclaw/plugin-sdk": "workspace:*"
   },
