@@ -24,7 +24,7 @@ describe("apify web fetch provider", () => {
 
     expect(provider.id).toBe("apify");
     expect(provider.label).toBe("Apify Website Content Crawler");
-    expect(provider.credentialPath).toBe("plugins.entries.apify.config.webFetch.apiKey");
+    expect(provider.credentialPath).toBe("plugins.entries.apify.config.apiKey");
     expect(provider.envVars).toEqual(["APIFY_API_KEY"]);
     expect(provider.autoDetectOrder).toBe(50);
     expect(typeof provider.getCredentialValue).toBe("function");
@@ -234,9 +234,9 @@ describe("apify web fetch provider", () => {
     expect(
       (
         configTarget as {
-          plugins?: { entries?: { apify?: { config?: { webFetch?: { apiKey?: unknown } } } } };
+          plugins?: { entries?: { apify?: { config?: { apiKey?: unknown } } } };
         }
-      ).plugins?.entries?.apify?.config?.webFetch?.apiKey,
+      ).plugins?.entries?.apify?.config?.apiKey,
     ).toBe("apify_written_key");
   });
 });

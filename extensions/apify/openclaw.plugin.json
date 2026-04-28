@@ -4,15 +4,9 @@
     "apify": ["APIFY_API_KEY"]
   },
   "uiHints": {
-    "webSearch.apiKey": {
+    "apiKey": {
       "label": "Apify API Token",
-      "help": "Apify personal API token for web search (fallback: APIFY_API_KEY env var).",
-      "sensitive": true,
-      "placeholder": "apify_..."
-    },
-    "webFetch.apiKey": {
-      "label": "Apify API Token",
-      "help": "Apify personal API token for web fetch (fallback: APIFY_API_KEY env var).",
+      "help": "Apify personal API token used for both web search and web fetch (fallback: APIFY_API_KEY env var).",
       "sensitive": true,
       "placeholder": "apify_..."
     }
@@ -28,6 +22,7 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
+      "apiKey": { "type": ["string", "object"] },
       "webSearch": {
         "type": "object",
         "additionalProperties": false,

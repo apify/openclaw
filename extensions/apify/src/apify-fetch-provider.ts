@@ -13,6 +13,7 @@ import {
 import { APIFY_FETCH_PROVIDER_SHARED } from "./apify-fetch-provider-shared.js";
 import type { CrawlerType } from "./apify-fetch-runtime.js";
 
+const APIFY_SHARED_CREDENTIAL_PATH = "plugins.entries.apify.config.apiKey";
 const APIFY_FETCH_CREDENTIAL_PATH = "plugins.entries.apify.config.webFetch.apiKey";
 
 type ApifyFetchRuntime = typeof import("./apify-fetch-runtime.js");
@@ -25,13 +26,16 @@ function loadApifyFetchRuntime(): Promise<ApifyFetchRuntime> {
 }
 
 function resolveApifyFetchApiKey(config: unknown): string | undefined {
-  const webFetchConfig = (
+  const apifyConfig = (
     config as {
-      plugins?: { entries?: { apify?: { config?: { webFetch?: { apiKey?: unknown } } } } };
+      plugins?: {
+        entries?: { apify?: { config?: { apiKey?: unknown; webFetch?: { apiKey?: unknown } } } };
+      };
     }
-  )?.plugins?.entries?.apify?.config?.webFetch;
+  )?.plugins?.entries?.apify?.config;
   return (
-    readConfiguredSecretString(webFetchConfig?.apiKey, APIFY_FETCH_CREDENTIAL_PATH) ??
+    readConfiguredSecretString(apifyConfig?.webFetch?.apiKey, APIFY_FETCH_CREDENTIAL_PATH) ??
+    readConfiguredSecretString(apifyConfig?.apiKey, APIFY_SHARED_CREDENTIAL_PATH) ??
     readProviderEnvValue(["APIFY_API_KEY"])
   );
 }

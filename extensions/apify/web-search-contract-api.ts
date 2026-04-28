@@ -4,7 +4,7 @@ import {
 } from "openclaw/plugin-sdk/provider-web-search-contract";
 
 export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
-  const credentialPath = "plugins.entries.apify.config.webSearch.apiKey";
+  const credentialPath = "plugins.entries.apify.config.apiKey";
 
   return {
     id: "apify",

@@ -16,7 +16,7 @@ describe("apify web search provider", () => {
 
     expect(provider.id).toBe("apify");
     expect(provider.label).toBe("Apify RAG Web Browser");
-    expect(provider.credentialPath).toBe("plugins.entries.apify.config.webSearch.apiKey");
+    expect(provider.credentialPath).toBe("plugins.entries.apify.config.apiKey");
     expect(provider.envVars).toEqual(["APIFY_API_KEY"]);
     expect(provider.autoDetectOrder).toBe(60);
     expect(typeof provider.getCredentialValue).toBe("function");

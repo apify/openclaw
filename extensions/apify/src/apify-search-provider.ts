@@ -8,7 +8,7 @@ import {
 } from "openclaw/plugin-sdk/provider-web-search";
 import { createWebSearchProviderContractFields } from "openclaw/plugin-sdk/provider-web-search-config-contract";
 
-const APIFY_SEARCH_CREDENTIAL_PATH = "plugins.entries.apify.config.webSearch.apiKey";
+const APIFY_SEARCH_CREDENTIAL_PATH = "plugins.entries.apify.config.apiKey";
 
 type ApifySearchRuntime = typeof import("./apify-search-runtime.js");
 
@@ -54,10 +54,18 @@ export function createApifyWebSearchProvider(): WebSearchProviderPlugin {
       configuredCredential: { pluginId: "apify" },
     }),
     createTool: (ctx) => {
+      const pluginWebSearchConfig = resolveProviderWebSearchPluginConfig(ctx.config, "apify");
+      const sharedApiKey = (
+        ctx.config as {
+          plugins?: { entries?: { apify?: { config?: { apiKey?: unknown } } } };
+        }
+      )?.plugins?.entries?.apify?.config?.apiKey;
       const searchConfig: SearchConfigRecord | undefined = mergeScopedSearchConfig(
         ctx.searchConfig,
         "apify",
-        resolveProviderWebSearchPluginConfig(ctx.config, "apify"),
+        pluginWebSearchConfig?.apiKey != null
+          ? pluginWebSearchConfig
+          : { ...pluginWebSearchConfig, apiKey: sharedApiKey },
         { mirrorApiKeyToTopLevel: true },
       );
       return {
