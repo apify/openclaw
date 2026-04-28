@@ -1,0 +1,35 @@
+{
+  "id": "apify",
+  "providerAuthEnvVars": {
+    "apify": ["APIFY_API_KEY"]
+  },
+  "uiHints": {
+    "webSearch.apiKey": {
+      "label": "Apify API Token",
+      "help": "Apify personal API token for web search (fallback: APIFY_API_KEY env var).",
+      "sensitive": true,
+      "placeholder": "apx_..."
+    }
+  },
+  "contracts": {
+    "webSearchProviders": ["apify"]
+  },
+  "configContracts": {
+    "compatibilityRuntimePaths": ["tools.web.search.apiKey"]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "webSearch": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "apiKey": { "type": ["string", "object"] },
+          "timeoutSeconds": { "type": "number" },
+          "maxResults": { "type": "number" }
+        }
+      }
+    }
+  }
+}
