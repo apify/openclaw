@@ -57,6 +57,9 @@ local while `web_search` and `x_search` can use xAI Responses under the hood.
 ## Choosing a provider
 
 <CardGroup cols={2}>
+  <Card title="Apify" icon="globe" href="/tools/apify">
+    Headless-rendered Google Search results with smart Markdown extraction. Free tier available.
+  </Card>
   <Card title="Brave Search" icon="shield" href="/tools/brave-search">
     Structured results with snippets. Supports `llm-context` mode, country/language filters. Free tier available.
   </Card>
@@ -99,6 +102,7 @@ local while `web_search` and `x_search` can use xAI Responses under the hood.
 
 | Provider                                  | Result style               | Filters                                          | API key                                                                                 |
 | ----------------------------------------- | -------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| [Apify](/tools/apify)                     | Full-page Markdown         | --                                               | `APIFY_API_KEY`                                                                         |
 | [Brave](/tools/brave-search)              | Structured snippets        | Country, language, time, `llm-context` mode      | `BRAVE_API_KEY`                                                                         |
 | [DuckDuckGo](/tools/duckduckgo-search)    | Structured snippets        | --                                               | None (key-free)                                                                         |
 | [Exa](/tools/exa-search)                  | Structured + extracted     | Neural/keyword mode, date, content extraction    | `EXA_API_KEY`                                                                           |
