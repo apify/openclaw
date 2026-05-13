@@ -16,8 +16,8 @@ Both share a single API key stored at `plugins.entries.apify.config.apiKey`.
 
 ## Get an API key
 
-1. Create an [Apify account](https://apify.com/).
-2. Copy your personal API token from the Apify Console.
+1. Create a free [Apify](https://apify.com/) account.
+2. Copy your API token from [Apify Console](https://console.apify.com/settings/integrations).
 3. Store it in config or set `APIFY_API_KEY` in the gateway environment.
 
 ## Configure Apify web search
@@ -48,7 +48,7 @@ Both share a single API key stored at `plugins.entries.apify.config.apiKey`.
 }
 ```
 
-The RAG Web Browser actor returns headless-rendered pages with full markdown content, which is better than plain link-list results for JS-heavy sites.
+The [RAG Web Browser](https://apify.com/apify/rag-web-browser) Actor returns headless-rendered pages with full Markdown content, providing full context and formatting even from dynamic web pages.
 
 ## Configure Apify web fetch
 
@@ -96,11 +96,12 @@ step and routes all `web_fetch` calls directly to the Apify actor.
 ## Notes
 
 - `plugins.entries.apify.config.apiKey` is the shared key for both providers. The env fallback is `APIFY_API_KEY`.
-- Actor memory is chosen automatically: 1 GB for cheerio/jsdom, 4 GB for playwright variants.
+- Actor memory is chosen automatically: 1 GB for Cheerio/JSDOM raw HTTP requests, 4 GB for Playwright browser.
 - Results from the RAG Web Browser are cached for 15 minutes (controlled by `tools.web.search.cacheTtlMinutes`).
+- Use [Apify OpenClaw plugin](https://docs.apify.com/platform/integrations/openclaw) to let your claws access thousands of other web data extraction and automation tools from [Apify Store](https://apify.com/store)
 
 ## Related
 
 - [Web Search](/tools/web) -- all providers and auto-detection
-- [Web Fetch](/tools/web-fetch) -- web_fetch tool and provider configuration
+- [Web Fetch](/tools/web-fetch) -- `web_fetch` tool and provider configuration
 - [Firecrawl](/tools/firecrawl) -- alternative web fetch and search provider
