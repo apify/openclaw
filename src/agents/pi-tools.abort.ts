@@ -1,5 +1,8 @@
-import type { AnyAgentTool } from "./pi-tools.types.js";
+import { copyPluginToolMeta } from "../plugins/tools.js";
 import { bindAbortRelay } from "../utils/fetch-timeout.js";
+import { copyChannelAgentToolMeta } from "./channel-tools.js";
+import { copyBeforeToolCallHookMarker } from "./pi-tools.before-tool-call.js";
+import type { AnyAgentTool } from "./pi-tools.types.js";
 
 function throwAbortError(): never {
   const err = new Error("Aborted");
@@ -54,7 +57,7 @@ export function wrapToolWithAbortSignal(
   if (!execute) {
     return tool;
   }
-  return {
+  const wrappedTool: AnyAgentTool = {
     ...tool,
     execute: async (toolCallId, params, signal, onUpdate) => {
       const combined = combineAbortSignals(signal, abortSignal);
@@ -64,4 +67,8 @@ export function wrapToolWithAbortSignal(
       return await execute(toolCallId, params, combined, onUpdate);
     },
   };
+  copyPluginToolMeta(tool, wrappedTool);
+  copyChannelAgentToolMeta(tool as never, wrappedTool as never);
+  copyBeforeToolCallHookMarker(tool, wrappedTool);
+  return wrappedTool;
 }

@@ -1,6 +1,6 @@
-import type { GatewayRequestHandler } from "./types.js";
 import { ErrorCodes, errorShape, validateNodeInvokeResultParams } from "../protocol/index.js";
 import { respondInvalidParams } from "./nodes.helpers.js";
+import type { GatewayRequestHandler } from "./types.js";
 
 function normalizeNodeInvokeResultParams(params: unknown): unknown {
   if (!params || typeof params !== "object") {
@@ -54,6 +54,7 @@ export const handleNodeInvokeResult: GatewayRequestHandler = async ({
   const ok = context.nodeRegistry.handleInvokeResult({
     id: p.id,
     nodeId: p.nodeId,
+    connId: client?.connId,
     ok: p.ok,
     payload: p.payload,
     payloadJSON: p.payloadJSON ?? null,

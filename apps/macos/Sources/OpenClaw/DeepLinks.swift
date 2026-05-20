@@ -67,6 +67,10 @@ final class DeepLinkHandler {
         switch route {
         case let .agent(link):
             await self.handleAgent(link: link, originalURL: url)
+        case .gateway:
+            break
+        case .dashboard:
+            await self.openDashboard()
         }
     }
 
@@ -175,6 +179,14 @@ final class DeepLinkHandler {
     }
 
     // MARK: - UI
+
+    private func openDashboard() async {
+        do {
+            try await DashboardManager.shared.show()
+        } catch {
+            DashboardManager.shared.showFailure(error)
+        }
+    }
 
     private func confirm(title: String, message: String) -> Bool {
         let alert = NSAlert()

@@ -1,52 +1,33 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const callGatewayMock = vi.fn();
-
-vi.mock("../gateway/call.js", () => ({
-  callGateway: (opts: unknown) => callGatewayMock(opts),
-}));
-
-let configOverride: ReturnType<(typeof import("../config/config.js"))["loadConfig"]> = {
-  session: {
-    mainKey: "main",
-    scope: "per-sender",
-  },
-};
-
-vi.mock("../config/config.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../config/config.js")>();
-  return {
-    ...actual,
-    loadConfig: () => configOverride,
-  };
-});
-
-import "./test-helpers/fast-core-tools.js";
-import { createOpenClawTools } from "./openclaw-tools.js";
+import { beforeEach, describe, expect, it } from "vitest";
+import {
+  callGatewayMock,
+  setSubagentsConfigOverride,
+} from "./openclaw-tools.subagents.test-harness.js";
 import {
   addSubagentRunForTests,
   listSubagentRunsForRequester,
   resetSubagentRegistryForTests,
 } from "./subagent-registry.js";
+import { createSubagentsTool } from "./tools/subagents-tool.js";
 
 describe("openclaw-tools: subagents steer failure", () => {
   beforeEach(() => {
     resetSubagentRegistryForTests();
-    callGatewayMock.mockReset();
+    callGatewayMock.mockClear();
     const storePath = path.join(
       os.tmpdir(),
       `openclaw-subagents-steer-${Date.now()}-${Math.random().toString(16).slice(2)}.json`,
     );
-    configOverride = {
+    setSubagentsConfigOverride({
       session: {
         mainKey: "main",
         scope: "per-sender",
         store: storePath,
       },
-    };
+    });
     fs.writeFileSync(storePath, "{}", "utf-8");
   });
 
@@ -73,13 +54,9 @@ describe("openclaw-tools: subagents steer failure", () => {
       return {};
     });
 
-    const tool = createOpenClawTools({
+    const tool = createSubagentsTool({
       agentSessionKey: "agent:main:main",
-      agentChannel: "discord",
-    }).find((candidate) => candidate.name === "subagents");
-    if (!tool) {
-      throw new Error("missing subagents tool");
-    }
+    });
 
     const result = await tool.execute("call-steer", {
       action: "steer",
@@ -87,12 +64,16 @@ describe("openclaw-tools: subagents steer failure", () => {
       message: "new direction",
     });
 
-    expect(result.details).toMatchObject({
-      status: "error",
-      action: "steer",
-      runId: expect.any(String),
-      error: "dispatch failed",
-    });
+    const details = result.details as {
+      status?: string;
+      action?: string;
+      runId?: unknown;
+      error?: string;
+    };
+    expect(details.status).toBe("error");
+    expect(details.action).toBe("steer");
+    expect(details.runId).toBeTypeOf("string");
+    expect(details.error).toBe("dispatch failed");
 
     const runs = listSubagentRunsForRequester("agent:main:main");
     expect(runs).toHaveLength(1);

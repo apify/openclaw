@@ -17,8 +17,10 @@ import {
   DEFAULT_GMAIL_TOPIC,
 } from "../hooks/gmail.js";
 import { defaultRuntime } from "../runtime.js";
+import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { formatDocsLink } from "../terminal/links.js";
 import { theme } from "../terminal/theme.js";
+import { formatCliCommand } from "./command-format.js";
 
 export function registerWebhooksCli(program: Command) {
   const webhooks = program
@@ -106,30 +108,18 @@ export function registerWebhooksCli(program: Command) {
 
 function parseGmailSetupOptions(raw: Record<string, unknown>): GmailSetupOptions {
   const accountRaw = raw.account;
-  const account = typeof accountRaw === "string" ? accountRaw.trim() : "";
+  const account = normalizeOptionalString(accountRaw) ?? "";
   if (!account) {
-    throw new Error("--account is required");
+    throw new Error(
+      `--account is required. Example: ${formatCliCommand("openclaw webhooks gmail setup --account default")}.`,
+    );
   }
   const common = parseGmailCommonOptions(raw);
   return {
     account,
-    project: stringOption(raw.project),
-    topic: common.topic,
-    subscription: common.subscription,
-    label: common.label,
-    hookUrl: common.hookUrl,
-    hookToken: common.hookToken,
-    pushToken: common.pushToken,
-    bind: common.bind,
-    port: common.port,
-    path: common.path,
-    includeBody: common.includeBody,
-    maxBytes: common.maxBytes,
-    renewEveryMinutes: common.renewEveryMinutes,
-    tailscale: common.tailscaleRaw as GmailSetupOptions["tailscale"],
-    tailscalePath: common.tailscalePath,
-    tailscaleTarget: common.tailscaleTarget,
-    pushEndpoint: stringOption(raw.pushEndpoint),
+    project: normalizeOptionalString(raw.project),
+    ...gmailOptionsFromCommon(common),
+    pushEndpoint: normalizeOptionalString(raw.pushEndpoint),
     json: Boolean(raw.json),
   };
 }
@@ -137,7 +127,35 @@ function parseGmailSetupOptions(raw: Record<string, unknown>): GmailSetupOptions
 function parseGmailRunOptions(raw: Record<string, unknown>): GmailRunOptions {
   const common = parseGmailCommonOptions(raw);
   return {
-    account: stringOption(raw.account),
+    account: normalizeOptionalString(raw.account),
+    ...gmailOptionsFromCommon(common),
+  };
+}
+
+function parseGmailCommonOptions(raw: Record<string, unknown>) {
+  return {
+    topic: normalizeOptionalString(raw.topic),
+    subscription: normalizeOptionalString(raw.subscription),
+    label: normalizeOptionalString(raw.label),
+    hookUrl: normalizeOptionalString(raw.hookUrl),
+    hookToken: normalizeOptionalString(raw.hookToken),
+    pushToken: normalizeOptionalString(raw.pushToken),
+    bind: normalizeOptionalString(raw.bind),
+    port: numberOption(raw.port),
+    path: normalizeOptionalString(raw.path),
+    includeBody: booleanOption(raw.includeBody),
+    maxBytes: numberOption(raw.maxBytes),
+    renewEveryMinutes: numberOption(raw.renewMinutes),
+    tailscaleRaw: normalizeOptionalString(raw.tailscale),
+    tailscalePath: normalizeOptionalString(raw.tailscalePath),
+    tailscaleTarget: normalizeOptionalString(raw.tailscaleTarget),
+  };
+}
+
+function gmailOptionsFromCommon(
+  common: ReturnType<typeof parseGmailCommonOptions>,
+): Omit<GmailRunOptions, "account"> {
+  return {
     topic: common.topic,
     subscription: common.subscription,
     label: common.label,
@@ -154,34 +172,6 @@ function parseGmailRunOptions(raw: Record<string, unknown>): GmailRunOptions {
     tailscalePath: common.tailscalePath,
     tailscaleTarget: common.tailscaleTarget,
   };
-}
-
-function parseGmailCommonOptions(raw: Record<string, unknown>) {
-  return {
-    topic: stringOption(raw.topic),
-    subscription: stringOption(raw.subscription),
-    label: stringOption(raw.label),
-    hookUrl: stringOption(raw.hookUrl),
-    hookToken: stringOption(raw.hookToken),
-    pushToken: stringOption(raw.pushToken),
-    bind: stringOption(raw.bind),
-    port: numberOption(raw.port),
-    path: stringOption(raw.path),
-    includeBody: booleanOption(raw.includeBody),
-    maxBytes: numberOption(raw.maxBytes),
-    renewEveryMinutes: numberOption(raw.renewMinutes),
-    tailscaleRaw: stringOption(raw.tailscale),
-    tailscalePath: stringOption(raw.tailscalePath),
-    tailscaleTarget: stringOption(raw.tailscaleTarget),
-  };
-}
-
-function stringOption(value: unknown): string | undefined {
-  if (typeof value !== "string") {
-    return undefined;
-  }
-  const trimmed = value.trim();
-  return trimmed ? trimmed : undefined;
 }
 
 function numberOption(value: unknown): number | undefined {

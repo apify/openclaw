@@ -1,26 +1,17 @@
+import type { TUI } from "@earendil-works/pi-tui";
 import { describe, expect, it, vi } from "vitest";
+import { CustomEditor } from "./components/custom-editor.js";
+import { editorTheme } from "./theme/theme.js";
+import { createSubmitHarness } from "./tui-submit-test-helpers.js";
 import {
   createEditorSubmitHandler,
   createSubmitBurstCoalescer,
   shouldEnableWindowsGitBashPasteFallback,
-} from "./tui.js";
+} from "./tui-submit.js";
 
 describe("createEditorSubmitHandler", () => {
   it("routes lines starting with ! to handleBangLine", () => {
-    const editor = {
-      setText: vi.fn(),
-      addToHistory: vi.fn(),
-    };
-    const handleCommand = vi.fn();
-    const sendMessage = vi.fn();
-    const handleBangLine = vi.fn();
-
-    const onSubmit = createEditorSubmitHandler({
-      editor,
-      handleCommand,
-      sendMessage,
-      handleBangLine,
-    });
+    const { handleCommand, sendMessage, handleBangLine, onSubmit } = createSubmitHarness();
 
     onSubmit("!ls");
 
@@ -31,20 +22,7 @@ describe("createEditorSubmitHandler", () => {
   });
 
   it("treats a lone ! as a normal message", () => {
-    const editor = {
-      setText: vi.fn(),
-      addToHistory: vi.fn(),
-    };
-    const handleCommand = vi.fn();
-    const sendMessage = vi.fn();
-    const handleBangLine = vi.fn();
-
-    const onSubmit = createEditorSubmitHandler({
-      editor,
-      handleCommand,
-      sendMessage,
-      handleBangLine,
-    });
+    const { sendMessage, handleBangLine, onSubmit } = createSubmitHarness();
 
     onSubmit("!");
 
@@ -54,20 +32,7 @@ describe("createEditorSubmitHandler", () => {
   });
 
   it("does not treat leading whitespace before ! as a bang command", () => {
-    const editor = {
-      setText: vi.fn(),
-      addToHistory: vi.fn(),
-    };
-    const handleCommand = vi.fn();
-    const sendMessage = vi.fn();
-    const handleBangLine = vi.fn();
-
-    const onSubmit = createEditorSubmitHandler({
-      editor,
-      handleCommand,
-      sendMessage,
-      handleBangLine,
-    });
+    const { editor, sendMessage, handleBangLine, onSubmit } = createSubmitHarness();
 
     onSubmit("  !ls");
 
@@ -77,20 +42,7 @@ describe("createEditorSubmitHandler", () => {
   });
 
   it("trims normal messages before sending and adding to history", () => {
-    const editor = {
-      setText: vi.fn(),
-      addToHistory: vi.fn(),
-    };
-    const handleCommand = vi.fn();
-    const sendMessage = vi.fn();
-    const handleBangLine = vi.fn();
-
-    const onSubmit = createEditorSubmitHandler({
-      editor,
-      handleCommand,
-      sendMessage,
-      handleBangLine,
-    });
+    const { editor, sendMessage, onSubmit } = createSubmitHarness();
 
     onSubmit("  hello  ");
 
@@ -98,21 +50,60 @@ describe("createEditorSubmitHandler", () => {
     expect(editor.addToHistory).toHaveBeenCalledWith("hello");
   });
 
-  it("preserves internal newlines for multiline messages", () => {
-    const editor = {
-      setText: vi.fn(),
-      addToHistory: vi.fn(),
-    };
-    const handleCommand = vi.fn();
-    const sendMessage = vi.fn();
-    const handleBangLine = vi.fn();
+  it("preserves normal message drafts when chat is busy", () => {
+    const { editor, sendMessage, handleCommand, handleBangLine, onBlockedMessageSubmit, onSubmit } =
+      createSubmitHarness({
+        canSubmitMessage: () => false,
+      });
 
-    const onSubmit = createEditorSubmitHandler({
+    onSubmit("  wait, use c++ instead  ");
+
+    expect(editor.setText).toHaveBeenCalledWith("wait, use c++ instead");
+    expect(editor.addToHistory).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(handleCommand).not.toHaveBeenCalled();
+    expect(handleBangLine).not.toHaveBeenCalled();
+    expect(onBlockedMessageSubmit).toHaveBeenCalledWith("wait, use c++ instead");
+  });
+
+  it("restores the real editor value after pi-tui clears a busy submit", () => {
+    const tui = { requestRender: vi.fn() } as unknown as TUI;
+    const editor = new CustomEditor(tui, editorTheme);
+    const sendMessage = vi.fn();
+    const onBlockedMessageSubmit = vi.fn();
+    editor.setText("wait, use c++ instead");
+    editor.onSubmit = createEditorSubmitHandler({
       editor,
-      handleCommand,
+      handleCommand: vi.fn(),
       sendMessage,
-      handleBangLine,
+      handleBangLine: vi.fn(),
+      canSubmitMessage: () => false,
+      onBlockedMessageSubmit,
     });
+
+    editor.handleInput("\r");
+
+    expect(editor.getText()).toBe("wait, use c++ instead");
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(onBlockedMessageSubmit).toHaveBeenCalledWith("wait, use c++ instead");
+  });
+
+  it("continues to route slash commands while chat is busy", () => {
+    const { editor, handleCommand, sendMessage, onBlockedMessageSubmit, onSubmit } =
+      createSubmitHarness({
+        canSubmitMessage: () => false,
+      });
+
+    onSubmit("/abort");
+
+    expect(editor.setText).toHaveBeenCalledWith("");
+    expect(handleCommand).toHaveBeenCalledWith("/abort");
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(onBlockedMessageSubmit).not.toHaveBeenCalled();
+  });
+
+  it("preserves internal newlines for multiline messages", () => {
+    const { editor, handleCommand, sendMessage, handleBangLine, onSubmit } = createSubmitHarness();
 
     onSubmit("Line 1\nLine 2\nLine 3");
 
@@ -178,10 +169,32 @@ describe("shouldEnableWindowsGitBashPasteFallback", () => {
     ).toBe(true);
   });
 
-  it("disables fallback outside Windows", () => {
+  it("enables fallback on macOS iTerm", () => {
     expect(
       shouldEnableWindowsGitBashPasteFallback({
         platform: "darwin",
+        env: {
+          TERM_PROGRAM: "iTerm.app",
+        } as NodeJS.ProcessEnv,
+      }),
+    ).toBe(true);
+  });
+
+  it("enables fallback on macOS Terminal.app", () => {
+    expect(
+      shouldEnableWindowsGitBashPasteFallback({
+        platform: "darwin",
+        env: {
+          TERM_PROGRAM: "Apple_Terminal",
+        } as NodeJS.ProcessEnv,
+      }),
+    ).toBe(true);
+  });
+
+  it("disables fallback outside Windows", () => {
+    expect(
+      shouldEnableWindowsGitBashPasteFallback({
+        platform: "linux",
         env: {
           MSYSTEM: "MINGW64",
         } as NodeJS.ProcessEnv,

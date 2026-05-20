@@ -1,22 +1,46 @@
-import type { IrcClient } from "./client.js";
-import type { CoreConfig } from "./types.js";
+import {
+  createMessageReceiptFromOutboundResults,
+  type MessageReceipt,
+} from "openclaw/plugin-sdk/channel-message";
+import { resolveMarkdownTableMode } from "openclaw/plugin-sdk/markdown-table-runtime";
+import { requireRuntimeConfig } from "openclaw/plugin-sdk/plugin-config-runtime";
+import { convertMarkdownTables } from "openclaw/plugin-sdk/text-chunking";
 import { resolveIrcAccount } from "./accounts.js";
+import type { IrcClient } from "./client.js";
 import { connectIrcClient } from "./client.js";
+import { buildIrcConnectOptions } from "./connect-options.js";
 import { normalizeIrcMessagingTarget } from "./normalize.js";
 import { makeIrcMessageId } from "./protocol.js";
 import { getIrcRuntime } from "./runtime.js";
+import type { CoreConfig } from "./types.js";
 
 type SendIrcOptions = {
+  cfg: CoreConfig;
   accountId?: string;
   replyTo?: string;
   target?: string;
   client?: IrcClient;
 };
 
-export type SendIrcResult = {
+type SendIrcResult = {
   messageId: string;
   target: string;
+  receipt: MessageReceipt;
 };
+
+function recordIrcOutboundActivity(accountId: string): void {
+  try {
+    getIrcRuntime().channel.activity.record({
+      channel: "irc",
+      accountId,
+      direction: "outbound",
+    });
+  } catch (error) {
+    if (!(error instanceof Error) || error.message !== "IRC runtime not initialized") {
+      throw error;
+    }
+  }
+}
 
 function resolveTarget(to: string, opts?: SendIrcOptions): string {
   const fromArg = normalizeIrcMessagingTarget(to);
@@ -33,10 +57,9 @@ function resolveTarget(to: string, opts?: SendIrcOptions): string {
 export async function sendMessageIrc(
   to: string,
   text: string,
-  opts: SendIrcOptions = {},
+  opts: SendIrcOptions,
 ): Promise<SendIrcResult> {
-  const runtime = getIrcRuntime();
-  const cfg = runtime.config.loadConfig() as CoreConfig;
+  const cfg = requireRuntimeConfig(opts.cfg, "IRC send") as CoreConfig;
   const account = resolveIrcAccount({
     cfg,
     accountId: opts.accountId,
@@ -49,12 +72,12 @@ export async function sendMessageIrc(
   }
 
   const target = resolveTarget(to, opts);
-  const tableMode = runtime.channel.text.resolveMarkdownTableMode({
+  const tableMode = resolveMarkdownTableMode({
     cfg,
     channel: "irc",
     accountId: account.accountId,
   });
-  const prepared = runtime.channel.text.convertMarkdownTables(text.trim(), tableMode);
+  const prepared = convertMarkdownTables(text.trim(), tableMode);
   const payload = opts.replyTo ? `${prepared}\n\n[reply:${opts.replyTo}]` : prepared;
 
   if (!payload.trim()) {
@@ -65,35 +88,31 @@ export async function sendMessageIrc(
   if (client?.isReady()) {
     client.sendPrivmsg(target, payload);
   } else {
-    const transient = await connectIrcClient({
-      host: account.host,
-      port: account.port,
-      tls: account.tls,
-      nick: account.nick,
-      username: account.username,
-      realname: account.realname,
-      password: account.password,
-      nickserv: {
-        enabled: account.config.nickserv?.enabled,
-        service: account.config.nickserv?.service,
-        password: account.config.nickserv?.password,
-        register: account.config.nickserv?.register,
-        registerEmail: account.config.nickserv?.registerEmail,
-      },
-      connectTimeoutMs: 12000,
-    });
+    const transient = await connectIrcClient(
+      buildIrcConnectOptions(account, {
+        connectTimeoutMs: 12000,
+      }),
+    );
     transient.sendPrivmsg(target, payload);
     transient.quit("sent");
   }
 
-  runtime.channel.activity.record({
-    channel: "irc",
-    accountId: account.accountId,
-    direction: "outbound",
-  });
+  recordIrcOutboundActivity(account.accountId);
 
+  const messageId = makeIrcMessageId();
   return {
-    messageId: makeIrcMessageId(),
+    messageId,
     target,
+    receipt: createMessageReceiptFromOutboundResults({
+      results: [
+        {
+          channel: "irc",
+          messageId,
+          conversationId: target,
+        },
+      ],
+      kind: "text",
+      ...(opts.replyTo ? { replyToId: opts.replyTo } : {}),
+    }),
   };
 }

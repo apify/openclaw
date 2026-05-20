@@ -1,4 +1,4 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { NonEmptyString } from "./primitives.js";
 
 export const PresenceEntrySchema = Type.Object(
@@ -59,6 +59,13 @@ export const SnapshotSchema = Type.Object(
         Type.Literal("password"),
         Type.Literal("trusted-proxy"),
       ]),
+    ),
+    updateAvailable: Type.Optional(
+      Type.Object({
+        currentVersion: NonEmptyString,
+        latestVersion: NonEmptyString,
+        channel: NonEmptyString,
+      }),
     ),
   },
   { additionalProperties: false },
